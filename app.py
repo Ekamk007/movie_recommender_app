@@ -88,7 +88,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ── Download similarity.pkl via gdown ────────────────────────
-FILE_ID = "1co8HSvR0YxsU-04K9HFMCzKxHchKG9uC"
+FILE_ID = "1wdGcsHwkjJEt-81LuixSXep8Li3Jww3p"
 OUTPUT = "similarity.pkl"
 
 if not os.path.exists(OUTPUT):

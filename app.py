@@ -109,25 +109,29 @@ movies_df, similarity = load_data()
 
 # ── Sentiment Analysis ──────────────────────────────────────
 def simple_sentiment(reviews):
-
     if not reviews:
         return 0.5
 
     pos = {
-        "good", "great", "amazing", "love", "best",
-        "awesome", "excellent", "fantastic", "masterpiece"
+        "good", "great", "amazing", "love", "loved", "best",
+        "awesome", "excellent", "fantastic", "masterpiece",
+        "brilliant", "wonderful", "enjoy", "enjoyed", "perfect",
+        "beautiful", "compelling", "outstanding", "superb", "fun"
     }
 
     neg = {
-        "bad", "worst", "boring", "hate",
-        "awful", "waste", "poor", "terrible"
+        "bad", "worst", "boring", "hate", "hated",
+        "awful", "waste", "poor", "terrible", "disappointing",
+        "dull", "weak", "mediocre", "slow", "overrated",
+        "predictable", "stupid", "annoying", "forgettable", "bland"
     }
 
     scores = []
 
     for r in reviews[:5]:
-
         words = r.lower().split()
+        # Strip punctuation from words
+        words = [w.strip(".,!?\"'") for w in words]
 
         p = sum(w in pos for w in words)
         n = sum(w in neg for w in words)

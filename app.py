@@ -2,39 +2,91 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pickle
-from pathlib import Path
 
-# ── Page Config ─────────────────────────────
+# ── Page Config ─────────────────────────────────────────────
 st.set_page_config(
     page_title="CineMatch",
     page_icon="🎬",
     layout="wide"
 )
 
-# ── UI ──────────────────────────────────────
+# ── Custom CSS ──────────────────────────────────────────────
 st.markdown("""
 <style>
+
+.main {
+    background-color: #0f1117;
+}
+
+.hero {
+    text-align: center;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.hero h1 {
+    color: white;
+    font-size: 3rem;
+}
+
+.hero p {
+    color: #9ca3af;
+}
+
 .movie-card {
     background: #1a1a2e;
-    border-radius: 12px;
-    padding: 10px;
+    border-radius: 14px;
+    padding: 12px;
     text-align: center;
+    transition: 0.3s;
+    height: 100%;
+    border: 1px solid #2d2d44;
 }
+
+.movie-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.4);
+}
+
 .movie-card img {
     width: 100%;
     border-radius: 10px;
 }
+
 .title {
     color: white;
-    font-weight: 600;
-    margin-top: 5px;
+    font-weight: 700;
+    margin-top: 10px;
+    font-size: 1rem;
 }
+
+.metric {
+    color: #9ca3af;
+    font-size: 0.85rem;
+}
+
+.score {
+    color: #60a5fa;
+    font-weight: bold;
+}
+
+.review-box {
+    background: #111827;
+    padding: 10px;
+    border-radius: 10px;
+    color: #d1d5db;
+    font-size: 0.85rem;
+    margin-top: 10px;
+    text-align: left;
+}
+
 </style>
 """, unsafe_allow_html=True)
 
+# ── Constants ───────────────────────────────────────────────
 FALLBACK_IMG = "https://via.placeholder.com/300x450?text=No+Poster"
 
-# ── Load Data ───────────────────────────────
+# ── Load Data ───────────────────────────────────────────────
 @st.cache_resource
 def load_data():
     movies = pickle.load(open("movies_enriched.pkl", "rb"))
@@ -43,76 +95,210 @@ def load_data():
 
 movies_df, similarity = load_data()
 
-# ── Sentiment ───────────────────────────────
+# ── Sentiment Analysis ──────────────────────────────────────
 def simple_sentiment(reviews):
+
     if not reviews:
         return 0.5
 
-    pos = {"good","great","amazing","love","best","awesome","excellent"}
-    neg = {"bad","worst","boring","hate","awful","waste","poor"}
+    pos = {
+        "good","great","amazing","love","best",
+        "awesome","excellent","fantastic","masterpiece"
+    }
+
+    neg = {
+        "bad","worst","boring","hate",
+        "awful","waste","poor","terrible"
+    }
 
     scores = []
+
     for r in reviews[:5]:
+
         words = r.lower().split()
+
         p = sum(w in pos for w in words)
         n = sum(w in neg for w in words)
+
         scores.append(p/(p+n) if (p+n)>0 else 0.5)
 
-    return sum(scores)/len(scores)
+    return round(sum(scores)/len(scores), 3)
 
-# ── Recommendation ──────────────────────────
+# ── Recommendation Engine ───────────────────────────────────
 def recommend(movie_title, top_n=5):
 
     idx = movies_df[movies_df["title"] == movie_title].index[0]
+
     distances = similarity[idx]
 
     candidates = sorted(
         enumerate(distances),
         key=lambda x: x[1],
         reverse=True
-    )[1:15]
+    )[1:20]
 
     results = []
 
     for i, sim in candidates:
+
         row = movies_df.iloc[i]
 
-        sentiment = simple_sentiment(row["reviews"])
-        final_score = 0.8 * sim + 0.2 * sentiment
+        reviews = row.get("reviews", [])
+
+        sentiment = simple_sentiment(reviews)
+
+        final_score = (0.8 * sim) + (0.2 * sentiment)
 
         results.append({
             "title": row["title"],
             "poster": row.get("poster", FALLBACK_IMG),
-            "similarity": round(sim, 3),
+            "reviews": reviews,
+            "similarity": round(float(sim), 3),
             "sentiment": round(sentiment, 3),
             "final": round(final_score, 3)
         })
 
     results.sort(key=lambda x: x["final"], reverse=True)
+
     return results[:top_n]
 
-# ── App Title ───────────────────────────────
-st.title("🎬 CineMatch - Movie Recommender")
+# ── Hero Section ────────────────────────────────────────────
+st.markdown("""
+<div class="hero">
+    <h1>🎬 CineMatch</h1>
+    <p>AI Powered Offline Movie Recommendation System</p>
+</div>
+""", unsafe_allow_html=True)
 
+# ── Sidebar ─────────────────────────────────────────────────
+with st.sidebar:
+
+    st.header("⚙️ Settings")
+
+    top_n = st.slider(
+        "Number of Recommendations",
+        min_value=3,
+        max_value=10,
+        value=5
+    )
+
+    show_reviews = st.toggle("Show Reviews", value=True)
+
+    st.markdown("---")
+
+    st.markdown("""
+    ### About
+    - Content Based Filtering
+    - Cosine Similarity
+    - Sentiment Aware Ranking
+    - Fully Offline System
+    """)
+
+# ── Movie Selector ──────────────────────────────────────────
 movie_list = sorted(movies_df["title"].values)
-selected = st.selectbox("Select a movie", movie_list)
 
-# ── Button ──────────────────────────────────
-if st.button("Recommend"):
+selected = st.selectbox(
+    "🔍 Search Movie",
+    movie_list
+)
 
-    results = recommend(selected)
+# ── Selected Movie Display ──────────────────────────────────
+selected_row = movies_df[movies_df["title"] == selected].iloc[0]
 
-    cols = st.columns(len(results))
+st.subheader("Selected Movie")
 
-    for i, movie in enumerate(results):
-        with cols[i]:
+col1, col2 = st.columns([1, 3])
+
+with col1:
+    st.image(selected_row.get("poster", FALLBACK_IMG), width=220)
+
+with col2:
+    st.markdown(f"## {selected}")
+
+    review_count = len(selected_row.get("reviews", []))
+
+    st.metric("Reviews Available", review_count)
+
+# ── Recommendation Button ───────────────────────────────────
+if st.button("🎯 Recommend Movies"):
+
+    with st.spinner("Generating recommendations..."):
+
+        results = recommend(selected, top_n)
+
+    st.markdown("## 🍿 Recommended Movies")
+
+    cols = st.columns(min(top_n, 5))
+
+    for idx, movie in enumerate(results):
+
+        with cols[idx % 5]:
+
+            mood = int(movie["sentiment"] * 100)
 
             st.markdown(f"""
             <div class="movie-card">
-                <img src="{movie['poster']}" />
+                <img src="{movie['poster']}">
                 <div class="title">{movie['title']}</div>
-                <small>Sim: {movie['similarity']}</small><br>
-                <small>Mood: {movie['sentiment']}</small><br>
-                <b>Score: {movie['final']}</b>
+
+                <div class="metric">
+                    Similarity: {movie['similarity']}
+                </div>
+
+                <div class="metric">
+                    Mood Score: {mood}%
+                </div>
+
+                <div class="score">
+                    Final Score: {movie['final']}
+                </div>
             </div>
             """, unsafe_allow_html=True)
+
+            st.progress(movie["sentiment"])
+
+            if show_reviews and movie["reviews"]:
+
+                with st.expander("Reviews Preview"):
+
+                    for r in movie["reviews"][:2]:
+
+                        st.markdown(f"""
+                        <div class="review-box">
+                        {r[:300]}...
+                        </div>
+                        """, unsafe_allow_html=True)
+
+    # ── Analytics Table ─────────────────────────────────────
+    st.markdown("---")
+
+    st.subheader("📊 Recommendation Analytics")
+
+    analytics_df = pd.DataFrame([{
+        "Movie": m["title"],
+        "Similarity": m["similarity"],
+        "Sentiment": m["sentiment"],
+        "Final Score": m["final"]
+    } for m in results])
+
+    st.dataframe(
+        analytics_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
+    csv = analytics_df.to_csv(index=False).encode("utf-8")
+
+    st.download_button(
+        "⬇ Download Recommendations CSV",
+        csv,
+        "recommendations.csv",
+        "text/csv"
+    )
+
+# ── Footer ──────────────────────────────────────────────────
+st.markdown("---")
+
+st.caption(
+    "CineMatch • Offline Movie Recommendation System • Streamlit + NLP + Cosine Similarity"
+)

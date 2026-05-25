@@ -175,7 +175,7 @@ pickle.dump(new_df, open('movies.pkl','wb'))
 
 pickle.dump(similarity, open('similarity.pkl','wb'))
 
-API_KEY = "7f6deb75aa1f753c6aa8cb4e44ff1fa4"
+API_KEY = "API_KEY"
 
 import requests
 

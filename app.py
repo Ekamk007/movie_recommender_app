@@ -2,6 +2,8 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import pickle
+import os
+import gdown
 
 # ── Page Config ─────────────────────────────────────────────
 st.set_page_config(
@@ -84,9 +86,6 @@ st.markdown("""
 
 </style>
 """, unsafe_allow_html=True)
-import os
-import pickle
-import gdown
 
 FILE_ID = "1co8HSvR0YxsU-04K9HFMCzKxHchKG9uC"
 OUTPUT = "similarity.pkl"
@@ -231,9 +230,6 @@ with col1:
 with col2:
     st.markdown(f"## {selected}")
 
-    review_count = len(selected_row.get("reviews", []))
-
-    st.metric("Reviews Available", review_count)
 
 # ── Recommendation Button ───────────────────────────────────
 if st.button("🎯 Recommend Movies"):
@@ -252,11 +248,10 @@ if st.button("🎯 Recommend Movies"):
 
             mood = int(movie["sentiment"] * 100)
 
-            st.markdown(f"""
+           card_html = f"""
 <div class="movie-card">
-
     <img src="{movie['poster']}">
-
+    
     <div class="title">
         {movie['title']}
     </div>
@@ -272,9 +267,10 @@ if st.button("🎯 Recommend Movies"):
     <div class="score">
         Final Score: {movie['final']}
     </div>
-
 </div>
-""", unsafe_allow_html=True)
+"""
+
+st.markdown(card_html, unsafe_allow_html=True)
 
             st.progress(movie["sentiment"])
 

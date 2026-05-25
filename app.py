@@ -82,7 +82,21 @@ st.markdown("""
 
 </style>
 """, unsafe_allow_html=True)
+import os
+import pickle
+import gdown
 
+FILE_ID = "1co8HSvR0YxsU-04K9HFMCzKxHchKG9uC"
+OUTPUT = "similarity.pkl"
+
+# Download only if file doesn't exist
+if not os.path.exists(OUTPUT):
+    url = f"https://drive.google.com/uc?id={FILE_ID}"
+    gdown.download(url, OUTPUT, quiet=False)
+
+# Load pickle
+with open(OUTPUT, "rb") as f:
+    similarity = pickle.load(f)
 # ── Constants ───────────────────────────────────────────────
 FALLBACK_IMG = "https://via.placeholder.com/300x450?text=No+Poster"
 

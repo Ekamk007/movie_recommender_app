@@ -87,17 +87,14 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ── Download similarity.pkl via gdown ────────────────────────
 FILE_ID = "1co8HSvR0YxsU-04K9HFMCzKxHchKG9uC"
 OUTPUT = "similarity.pkl"
 
-# Download only if file doesn't exist
 if not os.path.exists(OUTPUT):
     url = f"https://drive.google.com/uc?id={FILE_ID}"
     gdown.download(url, OUTPUT, quiet=False)
 
-# Load pickle
-with open(OUTPUT, "rb") as f:
-    similarity = pickle.load(f)
 # ── Constants ───────────────────────────────────────────────
 FALLBACK_IMG = "https://via.placeholder.com/300x450?text=No+Poster"
 
@@ -117,13 +114,13 @@ def simple_sentiment(reviews):
         return 0.5
 
     pos = {
-        "good","great","amazing","love","best",
-        "awesome","excellent","fantastic","masterpiece"
+        "good", "great", "amazing", "love", "best",
+        "awesome", "excellent", "fantastic", "masterpiece"
     }
 
     neg = {
-        "bad","worst","boring","hate",
-        "awful","waste","poor","terrible"
+        "bad", "worst", "boring", "hate",
+        "awful", "waste", "poor", "terrible"
     }
 
     scores = []
@@ -135,9 +132,9 @@ def simple_sentiment(reviews):
         p = sum(w in pos for w in words)
         n = sum(w in neg for w in words)
 
-        scores.append(p/(p+n) if (p+n)>0 else 0.5)
+        scores.append(p / (p + n) if (p + n) > 0 else 0.5)
 
-    return round(sum(scores)/len(scores), 3)
+    return round(sum(scores) / len(scores), 3)
 
 # ── Recommendation Engine ───────────────────────────────────
 def recommend(movie_title, top_n=5):
@@ -230,7 +227,6 @@ with col1:
 with col2:
     st.markdown(f"## {selected}")
 
-
 # ── Recommendation Button ───────────────────────────────────
 if st.button("🎯 Recommend Movies"):
 
@@ -244,33 +240,21 @@ if st.button("🎯 Recommend Movies"):
 
     for idx, movie in enumerate(results):
 
-        with cols[idx % 5]:
+        with cols[idx % 5]:                          # BUG 2 & 3 FIX: all card content inside column block
 
             mood = int(movie["sentiment"] * 100)
 
-           card_html = f"""
+            card_html = f"""
 <div class="movie-card">
     <img src="{movie['poster']}">
-    
-    <div class="title">
-        {movie['title']}
-    </div>
-
-    <div class="metric">
-        Similarity: {movie['similarity']}
-    </div>
-
-    <div class="metric">
-        Mood Score: {mood}%
-    </div>
-
-    <div class="score">
-        Final Score: {movie['final']}
-    </div>
+    <div class="title">{movie['title']}</div>
+    <div class="metric">Similarity: {movie['similarity']}</div>
+    <div class="metric">Mood Score: {mood}%</div>
+    <div class="score">Final Score: {movie['final']}</div>
 </div>
-"""
+"""                                                  # BUG 1 FIX: removed leading space before card_html
 
-st.markdown(card_html, unsafe_allow_html=True)
+            st.markdown(card_html, unsafe_allow_html=True)
 
             st.progress(movie["sentiment"])
 

@@ -59,15 +59,17 @@ st.markdown("""
     margin-top: 10px;
     font-size: 1rem;
 }
-
 .metric {
-    color: #9ca3af;
-    font-size: 0.85rem;
+    color: #d1d5db;
+    margin-top: 6px;
+    font-size: 0.9rem;
 }
 
 .score {
     color: #60a5fa;
     font-weight: bold;
+    margin-top: 8px;
+    font-size: 1rem;
 }
 
 .review-box {
@@ -251,23 +253,28 @@ if st.button("🎯 Recommend Movies"):
             mood = int(movie["sentiment"] * 100)
 
             st.markdown(f"""
-            <div class="movie-card">
-                <img src="{movie['poster']}">
-                <div class="title">{movie['title']}</div>
+<div class="movie-card">
 
-                <div class="metric">
-                    Similarity: {movie['similarity']}
-                </div>
+    <img src="{movie['poster']}">
 
-                <div class="metric">
-                    Mood Score: {mood}%
-                </div>
+    <div class="title">
+        {movie['title']}
+    </div>
 
-                <div class="score">
-                    Final Score: {movie['final']}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+    <div class="metric">
+        Similarity: {movie['similarity']}
+    </div>
+
+    <div class="metric">
+        Mood Score: {mood}%
+    </div>
+
+    <div class="score">
+        Final Score: {movie['final']}
+    </div>
+
+</div>
+""", unsafe_allow_html=True)
 
             st.progress(movie["sentiment"])
 
